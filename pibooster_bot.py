@@ -20,6 +20,14 @@ def check_subscription(user_id):
     status = response.get("result", {}).get("status", "")
     return status in ["member", "administrator", "creator"]
 
+# 🔹 Fonction pour envoyer des données à la Web App locale de l'utilisateur
+def update_web_app(user_id, data):
+    web_app_url = f"http://localhost:5000/update_stats?user_id={user_id}"
+    try:
+        requests.post(web_app_url, json=data)
+    except requests.exceptions.RequestException:
+        print(f"⚠️ Impossible d’envoyer les données à la Web App de {user_id}")
+
 # 🔹 Fonction pour afficher le menu persistant (clavier personnalisé)
 def show_persistent_menu(user_id):
     keyboard = ReplyKeyboardMarkup(resize_keyboard=True)
@@ -42,13 +50,32 @@ def show_inline_menu(user_id):
                               "Clique sur un bouton ci-dessous 👇", 
                      parse_mode="Markdown", reply_markup=markup)
 
-# 🔹 Commande /start
+# 🔹 Commande /start avec gestion des affiliés
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
     user_id = message.chat.id
-
+    args = message.text.split()
+    
     if user_id not in user_stats:
         user_stats[user_id] = {"affiliates": 0, "mining_speed": 1.0}  
+
+    if len(args) > 1:  # Si un parrain est mentionné
+        referrer_id = args[1]
+        if referrer_id.isdigit():
+            referrer_id = int(referrer_id)
+            if referrer_id != user_id:
+                user_stats[referrer_id]["affiliates"] += 1  # Ajouter un affilié
+                user_stats[referrer_id]["mining_speed"] = 1.0 + (0.1 * user_stats[referrer_id]["affiliates"])  # Recalcul vitesse
+
+                # 🔹 Mettre à jour la Web App du parrain
+                update_web_app(referrer_id, {
+                    "affiliates": user_stats[referrer_id]["affiliates"],
+                    "mining_speed": user_stats[referrer_id]["mining_speed"]
+                })
+
+                bot.send_message(referrer_id, f"🎉 Un nouvel affilié vient de rejoindre grâce à ton lien !\n"
+                                              f"👥 Affiliés : {user_stats[referrer_id]['affiliates']}\n"
+                                              f"⚡ Nouvelle vitesse de minage : {user_stats[referrer_id]['mining_speed']} πb/h")
 
     bot.send_message(user_id, "🚀 Bienvenue sur *Pi Booster* !\n\n"
                               "Pi Booster (πb) est conçu pour accélérer ton minage et "
@@ -144,4 +171,3 @@ threading.Thread(target=schedule_checker, daemon=True).start()
 # 🔹 Lancer le bot
 print("🚀 Bot en cours d'exécution...")
 bot.polling(none_stop=True)
-    

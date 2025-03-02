@@ -6,7 +6,7 @@ import threading
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton
 
 # 🔹 Configuration du bot
-TOKEN = "7816265986:AAFEQ4uzUkGHyiMBABMBJ_IKiZM0BuQdCwk"
+TOKEN = "8074251004:AAGqzwjTnj8Uc5aD1QyTFYHpGO0Zy4nhOyM"
 CHANNEL_USERNAME = "@pibooster"
 WEB_APP_URL = "https://pibooster.onrender.com"
 
@@ -144,3 +144,4 @@ threading.Thread(target=schedule_checker, daemon=True).start()
 # 🔹 Lancer le bot
 print("🚀 Bot en cours d'exécution...")
 bot.polling(none_stop=True)
+    
